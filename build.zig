@@ -123,7 +123,7 @@ fn sdkPath(comptime suffix: []const u8) []const u8 {
 
 const sdl2_symbol_definitions = @embedFile("stubs/libSDL2.def");
 
-build: *Build,
+zig_build: *Build,
 config_path: []const u8,
 
 prepare_sources: *PrepareStubSourceStep,
@@ -141,7 +141,7 @@ pub fn init(b: *Build, maybe_config_path: ?[]const u8) *Sdk {
     ) catch @panic("out of memory");
 
     sdk.* = .{
-        .build = b,
+        .zig_build = b,
         .config_path = config_path,
         .prepare_sources = undefined,
     };
@@ -191,7 +191,7 @@ pub fn getNativeModuleVulkan(sdk: *Sdk, vulkan: *Build.Module) *Build.Module {
 
 /// Returns the smart wrapper for the SDL api. Contains convenient zig types, tagged unions and so on.
 pub fn getWrapperModule(sdk: *Sdk) *Build.Module {
-    return sdk.build.createModule(.{
+    return sdk.zig_build.createModule(.{
         .root_source_file = .{ .cwd_relative = sdkPath("/src/wrapper/sdl.zig") },
         .imports = &.{
             .{
@@ -209,11 +209,11 @@ pub fn getWrapperModuleVulkan(sdk: *Sdk, vulkan: *Build.Module) *Build.Module {
         .root_source_file = .{ .cwd_relative = sdkPath("/src/wrapper/sdl.zig") },
         .imports = &.{
             .{
-                .name = sdk.build.dupe("sdl-native"),
+                .name = sdk.zig_build.dupe("sdl-native"),
                 .module = sdk.getNativeModuleVulkan(vulkan),
             },
             .{
-                .name = sdk.build.dupe("vulkan"),
+                .name = sdk.zig_build.dupe("vulkan"),
                 .module = vulkan,
             },
         },
@@ -252,7 +252,7 @@ pub fn linkTtf(_: *Sdk, exe: *Compile) void {
 pub fn link(sdk: *Sdk, exe: *Compile, linkage: std.builtin.LinkMode) void {
     // TODO: Implement
 
-    const b = sdk.build;
+    const b = sdk.zig_build;
     const target = exe.root_module.resolved_target.?;
     const is_native = target.query.isNativeOs();
 
@@ -284,7 +284,7 @@ pub fn link(sdk: *Sdk, exe: *Compile, linkage: std.builtin.LinkMode) void {
         const sdk_paths = sdk.getPaths(target) catch |err| {
             const writer = std.io.getStdErr().writer();
 
-            const target_name = tripleName(sdk.build.allocator, target) catch @panic("out of memory");
+            const target_name = tripleName(sdk.zig_build.allocator, target) catch @panic("out of memory");
 
             switch (err) {
                 error.FileNotFound => {
@@ -449,7 +449,7 @@ fn getPaths(sdk: *Sdk, target_local: std.Build.ResolvedTarget) error{ MissingTar
     var root_node = parsed.value.object;
     var config_iterator = root_node.iterator();
     while (config_iterator.next()) |entry| {
-        const config_target = sdk.build.resolveTargetQuery(
+        const config_target = sdk.zig_build.resolveTargetQuery(
             std.Target.Query.parse(.{ .arch_os_abi = entry.key_ptr.* }) catch return error.InvalidTarget,
         );
 
@@ -481,7 +481,7 @@ const PrepareStubSourceStep = struct {
     assembly_source: GeneratedFile,
 
     pub fn create(sdk: *Sdk) *PrepareStubSourceStep {
-        const psss = sdk.build.allocator.create(Self) catch @panic("out of memory");
+        const psss = sdk.zig_build.allocator.create(Self) catch @panic("out of memory");
 
         psss.* = .{
             .step = Step.init(
