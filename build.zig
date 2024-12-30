@@ -156,7 +156,7 @@ pub fn init(b: *Build, maybe_config_path: ?[]const u8) *Sdk {
 pub fn getNativeModule(sdk: *Sdk) *Build.Module {
     const build_options = sdk.zig_build.addOptions();
     build_options.addOption(bool, "vulkan", false);
-    return sdk.build.createModule(.{
+    return sdk.zig_build.createModule(.{
         .root_source_file = .{ .cwd_relative = sdkPath("/src/binding/sdl.zig") },
         .imports = &.{
             .{
@@ -531,7 +531,7 @@ const PrepareStubSourceStep = struct {
             try writer.writeAll("  .byte 0\n");
         }
 
-        self.assembly_source.path = try std.fs.path.join(self.sdk.build.allocator, &[_][]const u8{
+        self.assembly_source.path = try std.fs.path.join(self.sdk.zig_build.allocator, &[_][]const u8{
             dirpath.path,
             "sdl.S",
         });
