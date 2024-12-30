@@ -154,7 +154,7 @@ pub fn init(b: *Build, maybe_config_path: ?[]const u8) *Sdk {
 /// for a more *ziggy* feeling.
 /// This is similar to the *C import* result.
 pub fn getNativeModule(sdk: *Sdk) *Build.Module {
-    const build_options = sdk.build.addOptions();
+    const build_options = sdk.zig_build.addOptions();
     build_options.addOption(bool, "vulkan", false);
     return sdk.build.createModule(.{
         .root_source_file = .{ .cwd_relative = sdkPath("/src/binding/sdl.zig") },
@@ -402,7 +402,7 @@ pub fn link(sdk: *Sdk, exe: *Compile, linkage: std.builtin.LinkMode) void {
                 sdk_paths.bin,
                 "SDL2.dll",
             }) catch @panic("out of memory");
-            sdk.build.installBinFile(sdl2_dll_path, "SDL2.dll");
+            sdk.zig_build.installBinFile(sdl2_dll_path, "SDL2.dll");
         }
     } else if (target.result.isDarwin()) {
         // TODO: Implement cross-compilaton to macOS via system root provisioning
@@ -445,7 +445,7 @@ fn getPaths(sdk: *Sdk, target_local: std.Build.ResolvedTarget) error{ MissingTar
         else => |e| @panic(@errorName(e)),
     };
 
-    const parsed = std.json.parseFromSlice(std.json.Value, sdk.build.allocator, json_data, .{}) catch return error.InvalidJson;
+    const parsed = std.json.parseFromSlice(std.json.Value, sdk.zig_build.allocator, json_data, .{}) catch return error.InvalidJson;
     var root_node = parsed.value.object;
     var config_iterator = root_node.iterator();
     while (config_iterator.next()) |entry| {
@@ -507,7 +507,7 @@ const PrepareStubSourceStep = struct {
         _ = prog_node;
         const self: *Self = @fieldParentPtr("step", step);
 
-        var cache = CacheBuilder.init(self.sdk.build, "sdl");
+        var cache = CacheBuilder.init(self.sdk.zig_build, "sdl");
 
         cache.addBytes(sdl2_symbol_definitions);
 
