@@ -160,7 +160,7 @@ pub fn getNativeModule(sdk: *Sdk) *Build.Module {
         .root_source_file = .{ .cwd_relative = sdkPath("/src/binding/sdl.zig") },
         .imports = &.{
             .{
-                .name = sdk.build.dupe("build_options"),
+                .name = sdk.zig_build.dupe("build_options"),
                 .module = build_options.createModule(),
             },
         },
