@@ -195,7 +195,7 @@ pub fn getWrapperModule(sdk: *Sdk) *Build.Module {
         .root_source_file = .{ .cwd_relative = sdkPath("/src/wrapper/sdl.zig") },
         .imports = &.{
             .{
-                .name = sdk.build.dupe("sdl-native"),
+                .name = sdk.zig_build.dupe("sdl-native"),
                 .module = sdk.getNativeModule(),
             },
         },
@@ -398,7 +398,7 @@ pub fn link(sdk: *Sdk, exe: *Compile, linkage: std.builtin.LinkMode) void {
         if (linkage == .dynamic and exe.kind == .exe) {
             // On window, we need to copy SDL2.dll to the bin directory
             // for executables
-            const sdl2_dll_path = std.fs.path.join(sdk.build.allocator, &[_][]const u8{
+            const sdl2_dll_path = std.fs.path.join(sdk.zig_build.allocator, &[_][]const u8{
                 sdk_paths.bin,
                 "SDL2.dll",
             }) catch @panic("out of memory");
@@ -440,7 +440,7 @@ const Paths = struct {
 };
 
 fn getPaths(sdk: *Sdk, target_local: std.Build.ResolvedTarget) error{ MissingTarget, FileNotFound, InvalidJson, InvalidTarget }!Paths {
-    const json_data = std.fs.cwd().readFileAlloc(sdk.build.allocator, sdk.config_path, 1 << 20) catch |err| switch (err) {
+    const json_data = std.fs.cwd().readFileAlloc(sdk.zig_build.allocator, sdk.config_path, 1 << 20) catch |err| switch (err) {
         error.FileNotFound => return error.FileNotFound,
         else => |e| @panic(@errorName(e)),
     };
@@ -488,7 +488,7 @@ const PrepareStubSourceStep = struct {
                 .{
                     .id = .custom,
                     .name = "Prepare SDL2 stub sources",
-                    .owner = sdk.build,
+                    .owner = sdk.zig_build,
                     .makeFn = make,
                 },
             ),
